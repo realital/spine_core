@@ -245,24 +245,46 @@ class SkeletonJson {
 
     // // Skins.
     if (root.containsKey('skins')) {
-      for (String skinName in root['skins'].keys) {
-        final dynamic skinMap = root['skins'][skinName];
-        final Skin skin = Skin(skinName);
-        for (String slotName in skinMap.keys) {
-          final int slotIndex = skeletonData.findSlotIndex(slotName);
-          if (slotIndex == -1) throw StateError('Slot not found: $slotName');
-          final dynamic slotMap = skinMap[slotName];
-          for (String entryName in slotMap.keys) {
-            final Attachment? attachment = readAttachment(
+      late Skin skin;
+
+      if(skeletonData.version == '3.8.99') {
+        for (Map<String, dynamic> skinMap in root['skins']) {
+          final String skinName = skinMap['name'];
+          skin = Skin(skinName);
+          (skinMap['attachments'] as Map<String, dynamic>).forEach((String slotName, dynamic value) {
+            final Map<String, dynamic> slotMap = value;
+            final int slotIndex = skeletonData.findSlotIndex(slotName);
+            for (String entryName in slotMap.keys) {
+              final Attachment? attachment = readAttachment(
                 slotMap[entryName], skin, slotIndex, entryName, skeletonData);
-            if (attachment != null) {
-              skin.addAttachment(slotIndex, entryName, attachment);
+              if (null != attachment) {
+                skin.addAttachment(slotIndex, entryName, attachment);
+              }
+            }
+          });
+        }
+      }
+      else {
+        for (String skinName in root['skins'].keys) {
+          final dynamic skinMap = root['skins'][skinName];
+          final Skin skin = Skin(skinName);
+          for (String slotName in skinMap.keys) {
+            final int slotIndex = skeletonData.findSlotIndex(slotName);
+            if (slotIndex == -1) throw StateError('Slot not found: $slotName');
+            final dynamic slotMap = skinMap[slotName];
+            for (String entryName in slotMap.keys) {
+              final Attachment? attachment = readAttachment(
+                  slotMap[entryName], skin, slotIndex, entryName, skeletonData);
+              if (attachment != null) {
+                skin.addAttachment(slotIndex, entryName, attachment);
+              }
             }
           }
         }
-        skeletonData.skins.add(skin);
-        if (skin.name == 'default') skeletonData.defaultSkin = skin;
       }
+
+      skeletonData.skins.add(skin);
+      if (skin.name == 'default') skeletonData.defaultSkin = skin;
     }
 
     // Linked meshes.

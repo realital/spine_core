@@ -167,6 +167,11 @@ class TextureAtlas implements Disposable {
         return 270;
 
       default:
+        final int? v = int.tryParse(value);
+        if(null != v) {
+          return v;
+        }
+
         throw ArgumentError('unsupported value `$value` for rotate.');
     }
   }
